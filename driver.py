@@ -205,7 +205,7 @@ def main():
     result = pd.concat([kikt_data,kapt_data,kmis_data], ignore_index=True)
     result.sort_values(by=['year', 'month', 'day', 'hour', 'minutes'], inplace=True, ignore_index=True)
     result.reindex()
-    # multiplot(result)
+    multiplot(result)
 
     polar_plot(result)
     
