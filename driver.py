@@ -147,12 +147,10 @@ def polar_plot(df):
     for vector in vectors:
         speed_list.append(vector[0])
         direction_list.append(float_modulus(vector[1]))
-    # for vector in vectors:
-    #     x_comp = vector[0] * math.cos(math.radians(90 - vector[1]))
-    #     y_comp = vector[0] * math.sin(math.radians(90 - vector[1]))
+    
 
     ax.vlines(direction_list, 0, speed_list, colors=bar_colors, zorder=2)
-    
+
     plt.show()
 
 
