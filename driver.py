@@ -2,6 +2,9 @@ import pandas as pd
 import sys
 import requests
 import re
+import matplotlib.pyplot as plt
+import numpy as np
+import math
 
 def read_input(url):
     df = pd.read_csv(url, skiprows = 2, header=None, sep = ' ')
@@ -52,11 +55,43 @@ def format_data(url):
 
     return df
 
+def plot(df):
+    plt.ion()
+    for i in reversed(range(df.shape[0])):
+
+
+        anglestr = df.loc[i, 'wind direction']
+        speedstr = df.loc[i, 'wind speed']
+
+        angle = float(anglestr)
+        speed = float(speedstr)
+        
+        x = speed * math.cos(math.radians(90 - angle))
+        y = speed * math.sin(math.radians(90 - angle))
+
+        vector  = np.array([[x,y]])
+        origin = np.array([[0], [0]])
+        plt.quiver(*origin, vector[:,0], vector[:,1], color = ['r'], scale=21)
+        plt.draw()
+        date = df.loc[i, 'month'] + "/" + df.loc[i, 'day'] + "/" + df.loc[i, 'year'] + " " + df.loc[i, 'hour'] + ":" + df.loc[i, 'minutes']
+        plt.text(-0.04, 0.04, date, fontsize = 14)
+        plt.pause(0.02)
+
+        plt.clf()
+
+
+
+
+
+
+    
+
 
 def main():
     urlKIKT = "https://www.ndbc.noaa.gov/data/realtime2/KIKT.txt"
     kikt_data = format_data(urlKIKT)
-    print_formatted_data(kikt_data)
+    # print_formatted_data(kikt_data)
+    plot(kikt_data)
     
 
 
