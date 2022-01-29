@@ -12,7 +12,6 @@ def read_input(url):
 
 def format_data(url):
     response = requests.get(url)
-    # print(response.text)
     lines = response.text.split("\n")
     trimmed_lines = []
     for line in lines:
@@ -140,23 +139,10 @@ def main():
     result = pd.concat([kikt_data,kapt_data,kmis_data], ignore_index=True)
     result.sort_values(by=['year', 'month', 'day', 'hour', 'minutes'], inplace=True, ignore_index=True)
     result.reindex()
-    print(result.shape)
-    # print_formatted_data(kikt_data)
-    # print_formatted_data(kapt_data)
-    # print_formatted_data(kmis_data)
-    # print_formatted_data(result)
-
     multiplot(result)
-    # print_formatted_data(kikt_data)
-    # plot(kikt_data)
     
-
-
-
-
 def print_formatted_data(data):
     print(data)
-
 
 
 if __name__ == '__main__':
