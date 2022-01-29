@@ -106,7 +106,7 @@ def multiplot(df):
 
         current_arrow = plt.quiver(*origin, vector[:,0], vector[:,1], color=colors, scale=60)
         date = tranch_date[0] + "/" + tranch_date[1] + "/" + tranch_date[2] + " " + tranch_date[3] + ":" + tranch_date[4]
-        current_time = plt.text(50,500000, date, fontsize = 14)
+        current_time = plt.text(50,500000, date, fontsize = 14, color='white')
         plt.pause(.002)
         current_arrow.remove()
         current_time.remove()
