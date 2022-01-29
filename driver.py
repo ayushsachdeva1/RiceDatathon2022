@@ -54,36 +54,21 @@ def format_data(url):
 
     return df
 
-def plot(df):
-    plt.ion()
-    for i in reversed(range(df.shape[0])):
-
-
-        anglestr = df.loc[i, 'wind direction']
-        speedstr = df.loc[i, 'wind speed']
-
-        angle = float(anglestr)
-        speed = float(speedstr)
-        
-        x = speed * math.cos(math.radians(90 - angle))
-        y = speed * math.sin(math.radians(90 - angle))
-
-        vector  = np.array([[x,y]])
-        origin = np.array([[0], [0]])
-        plt.quiver(*origin, vector[:,0], vector[:,1], color = ['r'], scale=21)
-        plt.draw()
-        date = df.loc[i, 'month'] + "/" + df.loc[i, 'day'] + "/" + df.loc[i, 'year'] + " " + df.loc[i, 'hour'] + ":" + df.loc[i, 'minutes']
-        plt.text(-0.04, 0.04, date, fontsize = 14)
-        plt.pause(0.02)
-
-        plt.clf()
-
 
 def multiplot(df):
-    plt.ion()
     i = 0
-    m = Basemap(projection='cass', resolution='l', width=3E6, height=3E6, lat_0=28.5, lon_0=-91)
+    m = Basemap(projection='cass', resolution='h', width=2E6, height=2E6, lat_0=28.71, lon_0=-90.917)
     m.bluemarble()
+    KIKT_loc = m(-88.289, 28.521)
+    plt.plot(KIKT_loc[0], KIKT_loc[1], 'ok', markersize=5, color='white')
+    plt.text(KIKT_loc[0], KIKT_loc[1], 'KIKT', fontsize=12, color='white')
+    KBQX_loc = m(-95.620, 28.314)
+    plt.plot(KBQX_loc[0], KBQX_loc[1], 'ok', markersize=5, color='white')
+    plt.text(KBQX_loc[0], KBQX_loc[1], 'KBQX', fontsize=12, color='white')
+    KMIS_loc = m(-88.842, 29.296)
+    plt.plot(KMIS_loc[0], KMIS_loc[1], 'ok', markersize=5, color='white')
+    plt.text(KMIS_loc[0], KMIS_loc[1], 'KMIS', fontsize=12, color='white')
+    locations = (KIKT_loc, KBQX_loc, KMIS_loc)
     while i < df.shape[0]:
         tranch = []
         tranch.append(i)
@@ -98,7 +83,9 @@ def multiplot(df):
 
         input_array = []
         colors = []
-        color_mapping = {'KIKT': 'r', 'KBQX':'b', 'KMIS':'g'}
+        color_mapping = {'KIKT': 'r', 'KBQX':(.996, .644, 0.0), 'KMIS': (.996,.996,0.0)}
+        origin_mapping = {'KIKT': locations[0], 'KBQX': locations[1], 'KMIS': locations[2]}
+        origin_input = [[], []]
         for index in tranch:
             anglestr = df.loc[index, 'wind direction']
             speedstr = df.loc[index, 'wind speed']
@@ -110,25 +97,35 @@ def multiplot(df):
             y = speed * math.sin(math.radians(90 - angle))
             input_array.append([x,y])
             colors.append(color_mapping[df.loc[index, 'Source']])
+            origin_tuple = origin_mapping[df.loc[index, 'Source']]
+            origin_input[0].append(origin_tuple[0])
+            origin_input[1].append(origin_tuple[1])
         
-        origin_input = []
-        origin_input.append([0] * len(input_array))
-        origin_input.append([0] * len(input_array))
-
         vector = np.array(input_array)
         origin = np.array(origin_input)
 
-        
-        
-        plt.quiver(*origin, vector[:,0], vector[:,1], color=colors, scale=60)
-        plt.draw()
+        current_arrow = plt.quiver(*origin, vector[:,0], vector[:,1], color=colors, scale=60)
         date = tranch_date[0] + "/" + tranch_date[1] + "/" + tranch_date[2] + " " + tranch_date[3] + ":" + tranch_date[4]
-        plt.text(-0.04, 0.04, date, fontsize = 14)
-        plt.pause(.001)
-        plt.clf()
+        current_time = plt.text(50,500000, date, fontsize = 14)
+        plt.pause(.002)
+        current_arrow.remove()
+        current_time.remove()
+    plt.close()
 
 
-
+def initialize_background():
+    m = Basemap(projection='cass', resolution='l', width=2E6, height=2E6, lat_0=28.71, lon_0=-90.917)
+    m.bluemarble()
+    KIKT_loc = m(-88.289, 28.521)
+    plt.plot(KIKT_loc[0], KIKT_loc[1], 'ok', markersize=5, color='black')
+    plt.text(KIKT_loc[0], KIKT_loc[1], 'KIKT', fontsize=12, color='black')
+    KBQX_loc = m(-95.620, 28.314)
+    plt.plot(KBQX_loc[0], KBQX_loc[1], 'ok', markersize=5, color='black')
+    plt.text(KBQX_loc[0], KBQX_loc[1], 'KBQX', fontsize=12, color='black')
+    KMIS_loc = m(-88.842, 29.296)
+    plt.plot(KMIS_loc[0], KMIS_loc[1], 'ok', markersize=5, color='black')
+    plt.text(KMIS_loc[0], KMIS_loc[1], 'KMIS', fontsize=12, color='black')
+    return KIKT_loc, KBQX_loc, KMIS_loc
 
     
 
