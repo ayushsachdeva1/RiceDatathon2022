@@ -144,6 +144,5 @@ def main():
 def print_formatted_data(data):
     print(data)
 
-
 if __name__ == '__main__':
     main()
