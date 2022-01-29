@@ -112,6 +112,70 @@ def multiplot(df):
         current_time.remove()
     plt.close()
 
+def polar_plot(df):
+    i = 0
+    vectors = []
+    bar_colors = ['#333333', '#444444', '#555555', '#666666', '#777777', '#888888', '#999999', '#AA0000']
+
+
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+
+    ax.set_rmax(5)
+    ax.set_rticks([1.25, 2.5, 3.75, 5])
+
+    ax.set_rlabel_position(-22.5)
+
+    ax.grid(True)
+
+    while i < df.shape[0]:
+        tranch = []
+        tranch.append(i)
+        tranch_date = (df.loc[i, 'month'], df.loc[i, 'day'], df.loc[i, 'year'])
+        flag = False
+        while i+1 < df.shape[0] and (df.loc[i+1, 'month'], df.loc[i+1, 'day'], df.loc[i+1, 'year']) == tranch_date:
+            flag = True
+            tranch.append(i+1)
+            i = i + 1
+        if flag == False:
+            i = i + 1
+        
+        speed, direction = compute_average_for_tranch(df, tranch)
+        vectors.append((speed,direction))
+    
+    speed_list = []
+    direction_list = []
+    for vector in vectors:
+        speed_list.append(vector[0])
+        direction_list.append(float_modulus(vector[1]))
+    
+
+    ax.vlines(direction_list, 0, speed_list, colors=bar_colors, zorder=2)
+
+    plt.show()
+
+
+def float_modulus(direction):
+    if 90 - direction < 0:
+        return 450 - direction
+    else:
+        return 90 - direction
+
+
+
+def compute_average_for_tranch(df, tranch):
+    angle_sum = 0.0
+    angle_count = 0
+    speed_sum = 0.0
+    speed_count = 0
+    for index in tranch:
+        angle_sum += float(df.loc[index, 'wind direction'])
+        angle_count = angle_count + 1
+        speed_sum += float(df.loc[index, 'wind speed'])
+        speed_count = speed_count + 1
+    
+    return speed_sum/speed_count, angle_sum/angle_count
+
+
 
 def initialize_background():
     m = Basemap(projection='cass', resolution='l', width=2E6, height=2E6, lat_0=28.71, lon_0=-90.917)
@@ -142,6 +206,8 @@ def main():
     result.sort_values(by=['year', 'month', 'day', 'hour', 'minutes'], inplace=True, ignore_index=True)
     result.reindex()
     multiplot(result)
+
+    polar_plot(result)
     
 def print_formatted_data(data):
     print(data)
