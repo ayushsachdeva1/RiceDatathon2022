@@ -1,0 +1,137 @@
+---
+title: "DATATHON"
+author: "Elliot Riesman-Tremonte"
+date: "1/28/2022"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## DATATHON
+
+```{r, echo = TRUE}
+library(readr)
+KIKT <- read.table(url("https://www.ndbc.noaa.gov/data/realtime2/KIKT.txt"),
+                     header = FALSE)
+colnames(KIKT) = c("YY",  "MM", "DD",  "hh", "mm", "WDIR", "WSPD", "GST",  "WVHT", "DPD", "APD", "MWD", "PRES", "ATMP", "WTMP", "DEWP", "VIS", "PTDY",  "TIDE")
+
+KAPT <- read.table(url("https://www.ndbc.noaa.gov/data/realtime2/KBQX.txt"),
+                   header = FALSE)
+colnames(KAPT) = c("YY",  "MM", "DD",  "hh", "mm", "WDIR", "WSPD", "GST",  "WVHT", "DPD", "APD", "MWD", "PRES", "ATMP", "WTMP", "DEWP", "VIS", "PTDY",  "TIDE")
+
+KMIS <- read.table(url("https://www.ndbc.noaa.gov/data/realtime2/KMIS.txt"),
+                   header = FALSE)
+colnames(KMIS) = c("YY",  "MM", "DD",  "hh", "mm", "WDIR", "WSPD", "GST",  "WVHT", "DPD", "APD", "MWD", "PRES", "ATMP", "WTMP", "DEWP", "VIS", "PTDY",  "TIDE")
+
+library(Rcpp)
+library(sf)
+library(readr)
+library(tidyr)
+library(zoo)
+library(readxl)
+library(lubridate)
+library(ggplot2)
+library(scales)
+library(sp)
+library(rgdal)
+library(cowplot)
+library(ggthemes)
+library(ggpubr)
+library(maps)
+library(plotly)
+library(magick)
+library(animation)
+library(plotly)
+
+
+tx <- st_read("Downloads/Texas Counties Centroid Map/geo_export_9f062c09-caab-4fb8-8c1e-51dbd38ac170.shp")
+
+stat_coords = as.data.frame(matrix(data = c(-88.289, -95.620, -88.842, 28.521, 28.314, 29.296), nrow = 3),
+                            row.names = c("KIKT", "KAPT", "KMIS"))
+
+colnames(stat_coords) = c( "X", "Y")
+
+US_shape <- map_data("usa")
+
+KIKT$WDIR <- sapply(KIKT$WDIR, as.numeric)
+KIKT$WSPD <- sapply(KIKT$WSPD, as.numeric)
+
+KAPT$WDIR <- sapply(KAPT$WDIR, as.numeric)
+KAPT$WSPD <- sapply(KAPT$WSPD, as.numeric)
+
+KMIS$WDIR <- sapply(KMIS$WDIR, as.numeric)
+KMIS$WSPD <- sapply(KMIS$WSPD, as.numeric)
+
+KIKT$Direction <- (90 - KIKT$WDIR)*pi/180
+KAPT$Direction <- (90 - KAPT$WDIR)*pi/180
+KMIS$Direction <- (90 - KMIS$WDIR)*pi/180
+
+KIKT$x_vec <- 0.5*cos(KIKT$Direction); KIKT$y_vec <- 0.5*sin(KIKT$Direction)
+KAPT$x_vec <- 0.5*cos(KAPT$Direction); KAPT$y_vec <- 0.5*sin(KAPT$Direction)
+KMIS$x_vec <- 0.5*cos(KMIS$Direction); KMIS$y_vec <- 0.5*sin(KMIS$Direction)
+
+getIndices <- function (day, month, year) {
+  TimeIndices <- matrix(nrow = 24*3, ncol = 3)
+  TimeIndices[, 1] <- as.matrix(which(KIKT$YY == year & KIKT$MM == month & KIKT$DD == day),
+                                ncol = 1)
+  TimeIndices[, 2] <- as.matrix(which(KAPT$YY == year & KAPT$MM == month & KAPT$DD == day),
+                                ncol = 1)
+  TimeIndices[, 3] <- as.matrix(which(KMIS$YY == year & KMIS$MM == month & KMIS$DD == day),
+                                ncol = 1)
+  TimeIndices
+}
+
+gifByDate <- function(day, month, year) {
+
+  saveGIF({for (k1 in 1:72) {
+    
+    TimeIndex = getIndices(day, month, year)
+
+    viz <- ggplot(data = US_shape) +
+      geom_polygon(aes(x = long, y = lat, group = group),
+          color = "white", fill = "lightblue", size = 0.15) +
+      geom_point(data=stat_coords, aes(x = X, y = Y)) +
+      coord_cartesian(xlim = c(-100, -80), ylim = c(25, 30)) + labs(x = "Longitude", y = "Latitude") +
+      geom_segment(aes(x = stat_coords[1, 1], y = stat_coords[1, 2],
+          xend = stat_coords[1, 1] + KIKT$x_vec[TimeIndex[k1, 1]],
+          yend = stat_coords[1, 2] + KIKT$y_vec[TimeIndex[k1, 1]]),
+          arrow = arrow(length = unit(0.03, "npc"))) +
+      geom_segment(aes(x = stat_coords[2, 1], y = stat_coords[2, 2],
+          xend = stat_coords[2, 1] + KAPT$x_vec[TimeIndex[k1, 2]],
+          yend = stat_coords[2, 2] + KAPT$y_vec[TimeIndex[k1, 2]]),
+          arrow = arrow(length = unit(0.03, "npc"))) +
+      geom_segment(aes(x = stat_coords[3, 1], y = stat_coords[3, 2],
+          xend = stat_coords[3, 1] + KMIS$x_vec[TimeIndex[k1, 3]],
+          yend = stat_coords[3, 2] + KMIS$y_vec[TimeIndex[k1, 3]]),
+          arrow = arrow(length = unit(0.03, "npc")))
+      print(viz)
+    }}, interval = .2, movie.name= as.character(day) + "test.gif")
+  
+}
+
+
+new_frame <- merge(KIKT, KAPT, by = c("YY", "MM", "DD", "hh", "mm"), all = TRUE)
+new_frame <- merge(new_frame, KMIS)
+
+
+
+new_frame2 <- select(new_frame, c("YY", "MM", "DD", "hh", "mm", "Direction.x", "WSPD.x",
+                  "Direction.y", "WSPD.y", "Direction", "WSPD"))
+#library(dplyr)
+#new_frame3 <- new_frame2 %>% group_by("YY", "MM", "DD") %>%
+#  summarise(sum1 = sum(Direction.x))
+unique(KAPT$DD)
+
+
+gifByDate(20, 12, 2021)
+```
+
+
+## Example of the Time Series Plot for the Month of December
+
+
+```{r, echo = TRUE}
+```
